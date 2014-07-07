@@ -25,7 +25,7 @@ var Box2D = Box2D || {};
 
   var physics = game.physics = {};
 
-
+  physics.bodiesToBeRemove = [];
 
   physics.createWorld = function() {
     var gravity = new b2Vec2(0, 9.8);
@@ -35,9 +35,30 @@ var Box2D = Box2D || {};
   physics.createLevel = function() {
 
     this.createHoop();
+    this.createWorldBoundary();
+
+    this.setupContactListener();
 
     // the first ball
     this.spawnBall();
+  };
+
+  physics.createWorldBoundary = function() {
+    var bodyDef = new b2BodyDef;
+    var fixDef = new b2FixtureDef;
+
+    bodyDef.type = b2Body.b2_staticBody;
+    bodyDef.position.x = -800/pxPerMeter;
+    bodyDef.position.y = 300/pxPerMeter;
+    bodyDef.angle = 0;
+
+    fixDef.shape = new b2PolygonShape();
+    fixDef.shape.SetAsBox(2000/pxPerMeter, 10/pxPerMeter);
+
+    body = this.world.CreateBody(bodyDef);
+    body.CreateFixture(fixDef);
+
+    body.SetUserData({isBoundary:true}); // distingush this object from others.
   };
 
   physics.createHoop = function() {
@@ -89,6 +110,48 @@ var Box2D = Box2D || {};
     var board = this.world.CreateBody(bodyDef);
     board.CreateFixture(fixDef);
 
+    // hoop sensor
+    bodyDef.type = b2Body.b2_staticBody;
+    bodyDef.position.x = (hoopX+20)/pxPerMeter;
+    bodyDef.position.y = hoopY/pxPerMeter;
+    bodyDef.angle = 0;
+
+    fixDef.isSensor = true;
+    fixDef.shape = new b2PolygonShape();
+    fixDef.shape.SetAsBox(20/pxPerMeter, 3/pxPerMeter);
+
+    body = this.world.CreateBody(bodyDef);
+    body.CreateFixture(fixDef);
+  };
+
+  physics.setupContactListener = function() {
+    // contact
+    var contactListener = new Box2D.Dynamics.b2ContactListener;
+    contactListener.BeginContact = function(contact, manifold) {
+      if (contact.GetFixtureA().IsSensor() || contact.GetFixtureB().IsSensor()) {
+        game.increaseScore();
+      }
+
+      // world boundary.
+      var userDataA = contact.GetFixtureA().GetBody().GetUserData();
+      var userDataB = contact.GetFixtureB().GetBody().GetUserData();
+      if (userDataA !== null && userDataA.isBoundary ||
+          userDataB !== null && userDataB.isBoundary) {
+
+        // which one is boundary?
+        var boundary = contact.GetFixtureA().GetBody();
+        var body = contact.GetFixtureB().GetBody();
+
+        if (userDataB !== null && userDataB.isBoundary) {
+          boundary = contact.GetFixtureB().GetBody();
+          body = contact.GetFixtureA().GetBody();
+        }
+
+        physics.bodiesToBeRemove.push(body);
+
+      }
+    };
+    this.world.SetContactListener(contactListener);
   };
 
   physics.spawnBall = function() {
@@ -168,6 +231,17 @@ var Box2D = Box2D || {};
     }
     this.world.ClearForces();
 
+
+    // remove bodies
+    for (var i=0, len=this.bodiesToBeRemove.length; i<len; i++) {
+      var body = this.bodiesToBeRemove[i];
+      var sprite = body.GetUserData();
+      if (sprite) {
+        sprite.parent.removeChild(sprite);
+      }
+      this.world.DestroyBody(body);
+    }
+    this.bodiesToBeRemove.length = 0;
   };
 
   physics.showDebugDraw = function() {

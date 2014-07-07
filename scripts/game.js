@@ -20,6 +20,8 @@ var images = images||{};
 
     game.physics.createLevel();
 
+    game.score = 0;
+
     isPlaying = true;
 
     game.tickWhenDown = 0;
@@ -42,6 +44,11 @@ var images = images||{};
 
   game.spawnBall = function() {
     game.physics.spawnBall();
+  };
+
+  game.increaseScore = function() {
+    game.score += 1;
+    console.log(game.score);
   };
 
   game.tick = function(){

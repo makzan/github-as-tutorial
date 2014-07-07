@@ -2,7 +2,7 @@ var game = this.game || (this.game={});
 var createjs = createjs || {};
 var images = images||{};
 
-;(function(game, cjs){
+;(function(game, cjs, b2d){
 
   game.start = function() {
     cjs.EventDispatcher.initialize(game); // allow the game object to listen and dispatch custom events.
@@ -17,6 +17,31 @@ var images = images||{};
 
     game.physics.createWorld();
     game.physics.showDebugDraw();
+
+    game.physics.createLevel();
+
+    isPlaying = true;
+
+    game.tickWhenDown = 0;
+    game.tickWhenUp = 0;
+    game.stage.on('stagemousedown', function(e){
+      if (!isPlaying) { return; }
+      game.tickWhenDown = cjs.Ticker.getTicks();
+    });
+
+    game.stage.on('stagemouseup', function(e){
+      if (!isPlaying) { return; }
+      game.tickWhenUp = cjs.Ticker.getTicks();
+      ticksDiff = game.tickWhenUp - game.tickWhenDown;
+
+      game.physics.shootBall(e.stageX, e.stageY, ticksDiff);
+
+      setTimeout(game.spawnBall, 500);
+    });
+  };
+
+  game.spawnBall = function() {
+    game.physics.spawnBall();
   };
 
   game.tick = function(){
@@ -29,6 +54,6 @@ var images = images||{};
   game.start();
 
 
-}).call(this, game, createjs);
+}).call(this, game, createjs, Box2D);
 
 

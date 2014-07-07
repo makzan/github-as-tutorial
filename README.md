@@ -1,4 +1,6 @@
-Step 1 – Creating the physics world
+Step 2 – shooting-ball
+
+[→ Next Step](https://github.com/makzan/github-as-tutorial/compare/step-2...step-3)
 
 A game example from my book [HTML5 game development hotshot](http://www.packtpub.com/html5-game-development-hotshot/book).
 

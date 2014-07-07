@@ -1,3 +1,4 @@
+Step 1 – Creating the physics world
 
 A game example from my book [HTML5 game development hotshot](http://www.packtpub.com/html5-game-development-hotshot/book).
 
